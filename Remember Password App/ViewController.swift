@@ -15,8 +15,9 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     @IBOutlet weak var tableView: UITableView!
     
     var titles = [String]()
+    var sortTitles = [String]()
     var selectedTitle = ""
-    var key = true
+    var key = Bool()
     
     
     override func viewDidLoad() {
@@ -28,11 +29,14 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         
     }
     
-    override func viewDidAppear(_ animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         getPosts()
+        key = false
     }
     
     @objc func getPosts() {
+        titles.removeAll(keepingCapacity: false)
+        sortTitles.removeAll(keepingCapacity: false)
         
         let appDelegate = UIApplication.shared.delegate as! AppDelegate
         let context = appDelegate.persistentContainer.viewContext
@@ -45,18 +49,17 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
             
             if objects.count > 0 {
                 
-                titles.removeAll(keepingCapacity: false)
-                
                 for object in objects as! [NSManagedObject] {
                     
                     if let fetchTitle = object.value(forKey: "title") as? String {
                         
                         self.titles.append(fetchTitle)
-                        
                     }
-                    self.tableView.reloadData()
                 }
-                
+                for indexOfArray in 0..<titles.count {
+                    sortTitles.append(titles[(titles.count-1) - indexOfArray])
+                }
+                self.tableView.reloadData()
             }
         } catch {
             
@@ -65,7 +68,8 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        selectedTitle = self.titles[indexPath.row]
+        selectedTitle = self.sortTitles[indexPath.row]
+        key = true
         performSegue(withIdentifier: "toAdd", sender: nil)
     }
     
@@ -73,19 +77,18 @@ class ViewController: UIViewController, UITableViewDelegate, UITableViewDataSour
         if segue.identifier == "toAdd" {
             let destination = segue.destination as! AddPassword
             destination.chosenTitle = selectedTitle
-            key = false
             destination.key = key
         }
     }
     
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return titles.count
+        return sortTitles.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell()
-        cell.textLabel?.text = titles[indexPath.row]
+        cell.textLabel?.text = sortTitles[indexPath.row]
         
         return cell
     }
